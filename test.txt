@@ -1,6 +1,0 @@
-aaaaaaaaaaaaasfds
-<<<<<<< HEAD
-cccccccccccccccc
-=======
-bbbbbbbbbbbbbbb
->>>>>>> dev1
