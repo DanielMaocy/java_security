@@ -90,10 +90,5 @@ public class RSA {
     }  
     
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-    	/*try {
-			genKeyPair();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}*/
 	}
 }
