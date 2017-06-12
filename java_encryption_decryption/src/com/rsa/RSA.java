@@ -1,94 +1,73 @@
 package com.rsa;
 
-import java.io.IOException;
-import java.security.Key;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.Cipher;
 
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
+import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 public class RSA {
-	/** 指定加密算法为RSA */  
-    private static final String ALGORITHM = "RSA";  
-    /** 密钥长度，用来初始化 */  
-    private static final int KEYSIZE = 1204;  
-    /** 指定公钥存放文件 */  
-    private static String PUBLIC_KEY_FILE = "PublicKey";  
-    /** 指定私钥存放文件 */  
-    private static String PRIVATE_KEY_FILE = "PrivateKey";
 
-    private static void genKeyPair() throws NoSuchAlgorithmException {  
-        
-        // 随机数生成器
-        SecureRandom secureRandom = new SecureRandom();  
-          
-        // KeyPairGenerator对象 
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(ALGORITHM);  
-        keyPairGenerator.initialize(KEYSIZE, secureRandom);  
-  
-        KeyPair keyPair = keyPairGenerator.generateKeyPair(); // 生成密匙对  
-        Key publicKey = keyPair.getPublic(); // 获取公钥 
-        Key privateKey = keyPair.getPrivate(); // 获取私钥   
-  
-        byte[] publicKeyBytes = publicKey.getEncoded();  
-        byte[] privateKeyBytes = privateKey.getEncoded();  
-  
-        String publicKeyBase64 = new BASE64Encoder().encode(publicKeyBytes);  
-        String privateKeyBase64 = new BASE64Encoder().encode(privateKeyBytes);  
-  
-        System.out.println("publicKeyBase64.length():" + publicKeyBase64.length());  
-        System.out.println("publicKeyBase64:" + publicKeyBase64);  
-  
-        System.out.println("privateKeyBase64.length():" + privateKeyBase64.length());  
-        System.out.println("privateKeyBase64:" + privateKeyBase64);  
-    }  
-    
-    /** 
-     * 加密方法 
-     * @param source 源数据 
-     * @return 
-     * @throws Exception 
-     */  
-    public static String encrypt(String source) throws Exception {  
-          
-//        Key publicKey = getKey("");  
-  
-        /** 得到Cipher对象来实现对源数据的RSA加密 */  
-        Cipher cipher = Cipher.getInstance(ALGORITHM);  
-//        cipher.init(Cipher.ENCRYPT_MODE, publicKey);  
-        byte[] b = source.getBytes();  
-        /** 执行加密操作 */  
-        byte[] b1 = cipher.doFinal(b);  
-        BASE64Encoder encoder = new BASE64Encoder();  
-        return encoder.encode(b1);  
-    }  
-  
-    /** 
-     * 解密算法 
-     * @param cryptograph    密文 
-     * @return 
-     * @throws Exception 
-     */  
-    public static String decrypt(String cryptograph) throws Exception {  
-          
-//        Key privateKey = getKey("");  
-  
-        /** 得到Cipher对象对已用公钥加密的数据进行RSA解密 */  
-        Cipher cipher = Cipher.getInstance(ALGORITHM);  
-//        cipher.init(Cipher.DECRYPT_MODE, privateKey);  
-        BASE64Decoder decoder = new BASE64Decoder();  
-        byte[] b1 = decoder.decodeBuffer(cryptograph);  
-  
-        /** 执行解密操作 */  
-        byte[] b = cipher.doFinal(b1);  
-        return new String(b);  
-    }  
-    
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
+	public static void main(String[] args) {
+		jdkRSA("mao123456789");
 	}
+	
+	public static void jdkRSA(String str) {
+		try {
+			// 初始化秘钥
+			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+			keyPairGenerator.initialize(1024);
+			KeyPair keyPair = keyPairGenerator.generateKeyPair();
+			RSAPublicKey rsaPublicKey = (RSAPublicKey) keyPair.getPublic();
+			RSAPrivateKey rsaPrivateKey = (RSAPrivateKey) keyPair.getPrivate();
+			System.out.println("Public Key: " + Base64.encode(rsaPublicKey.getEncoded()));
+			System.out.println("Private Key: " + Base64.encode(rsaPrivateKey.getEncoded()));
+			
+			// 私钥加密、公钥解密——加密
+			PKCS8EncodedKeySpec pkcs8EncodedKeySpec 
+					= new PKCS8EncodedKeySpec(rsaPrivateKey.getEncoded());
+			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+			PrivateKey privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
+			Cipher cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.ENCRYPT_MODE, privateKey);
+			byte[] result = cipher.doFinal(str.getBytes());
+			System.out.println("私钥加密、公钥解密——加密：" + Base64.encode(result));
+			
+			// 私钥加密、公钥解密——解密
+			X509EncodedKeySpec x509EncodedKeySped
+					= new X509EncodedKeySpec(rsaPublicKey.getEncoded());
+			PublicKey publicKey = keyFactory.generatePublic(x509EncodedKeySped);
+			cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.DECRYPT_MODE, publicKey);
+			result = cipher.doFinal(result);
+			System.out.println("私钥加密、公钥解密——解密：" + new String(result));
+			
+			// 公钥加密、私钥解密——加密
+			x509EncodedKeySped = new X509EncodedKeySpec(rsaPublicKey.getEncoded());
+			publicKey = keyFactory.generatePublic(x509EncodedKeySped);
+			cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+			result = cipher.doFinal(result);
+			System.out.println("公钥加密、私钥解密——加密：" + Base64.encode(result));
+			
+			// 公钥加密、私钥解密——解密
+			pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(rsaPrivateKey.getEncoded());
+			privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
+			cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.DECRYPT_MODE, privateKey);
+			result = cipher.doFinal(result);
+			System.out.println("公钥加密、私钥解密——解密：" + new String(result));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 }
