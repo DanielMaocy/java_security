@@ -6,6 +6,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -145,6 +146,32 @@ public class RSA {
 		
 		return decryptionStr;
 	}
+	
+	/**
+	 * Ë½Ô¿Ç©Ãû
+	 * @param str
+	 * @return
+	 */
+	public static String privateKeySign(String str) {
+		String sign = "";
+		try {
+			PKCS8EncodedKeySpec pkcs8EncodedKeySpec 
+					= new PKCS8EncodedKeySpec(Base64.decode(privateKeyStr.getBytes()));
+//			PKCS8EncodedKeySpec pkcs8KeySpec = new PKCS8EncodedKeySpec(
+//					org.apache.commons.codec.binary.Base64.decodeBase64(privateKeyStr.getBytes("utf-8")));
+	        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+	        PrivateKey privateK = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
+	        Signature signature = Signature.getInstance("MD5withRSA");
+	        signature.initSign(privateK);
+	        signature.update(str.getBytes());
+	        sign = new String(Base64.decode(signature.sign()));
+//	        sign = org.apache.commons.codec.binary.Base64.encodeBase64String(signature.sign());
+		}catch(Exception e) {
+			System.out.println(e);
+		}
+        
+        return sign;
+    }
 
 	public static void main(String[] args) {
 		initKey();
